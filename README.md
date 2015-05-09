@@ -10,7 +10,7 @@ Only Linux systems can be monitored, but most modern distros will work.
 
 `rtop` is MIT-licensed and can be used anywhere with attribution.
 
-*`rtop`'s [home page](http://www.rtop-project.org/) has more information
+*`rtop`'s [home page](http://www.rtop-monitor.org/) has more information
 and screenshots!*
 
 ## build
