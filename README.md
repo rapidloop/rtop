@@ -19,13 +19,12 @@ and screenshots!*
 library [x/crypto](https://golang.org/pkg/crypto/). `rtop` does not use any
 dependency managers, just a git submodule. Follow these steps to build:
 
-    git clone http://github.com/rapidloop/rtop
+    git clone --recursive http://github.com/rapidloop/rtop
     cd rtop
-    make init
     make
 
-Note that `make init` will init the git submodule, so be sure to build from
-a git clone. You need to `make init` only once.
+The `--recursive` option will pull in the git submodule also. If you forget
+to use the flag, try `make init`.
 
 ## contribute
 

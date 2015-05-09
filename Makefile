@@ -31,4 +31,4 @@ rtop: src/*.go
 	GOPATH=`pwd` go build -o rtop src/*.go
 
 init:
-	git submodule init
+	git submodule update --init --recursive
