@@ -29,9 +29,11 @@ import (
 	"bufio"
 	"bytes"
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/agent"
 	"golang.org/x/crypto/ssh/terminal"
 	"io/ioutil"
 	"log"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
@@ -52,6 +54,16 @@ func addKeyAuth(auths []ssh.AuthMethod, keypath string) []ssh.AuthMethod {
 		os.Exit(1)
 	}
 	return append(auths, ssh.PublicKeys(signer))
+}
+
+func addAgentAuth(auths []ssh.AuthMethod) []ssh.AuthMethod {
+	if sock := os.Getenv("SSH_AUTH_SOCK"); len(sock) > 0 {
+		if agconn, err := net.Dial("unix", sock); err == nil {
+			ag := agent.NewClient(agconn)
+			auths = append(auths, ssh.PublicKeysCallback(ag.Signers))
+		}
+	}
+	return auths
 }
 
 func passwordCallback() (pass string, err error) {
@@ -101,6 +113,7 @@ func addPasswordAuth(auths []ssh.AuthMethod) []ssh.AuthMethod {
 
 func sshConnect(user, addr, keypath string) (client *ssh.Client) {
 	auths := make([]ssh.AuthMethod, 0, 2)
+	auths = addAgentAuth(auths)
 	auths = addKeyAuth(auths, keypath)
 	auths = addPasswordAuth(auths)
 
