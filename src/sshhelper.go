@@ -31,14 +31,16 @@ import (
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/terminal"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/signal"
-	"log"
 	"syscall"
 )
 
 func addKeyAuth(auths []ssh.AuthMethod, keypath string) []ssh.AuthMethod {
-	if len(keypath) == 0 { return auths }
+	if len(keypath) == 0 {
+		return auths
+	}
 	pemBytes, err := ioutil.ReadFile(keypath)
 	if err != nil {
 		log.Print(err)
@@ -55,15 +57,22 @@ func addKeyAuth(auths []ssh.AuthMethod, keypath string) []ssh.AuthMethod {
 func passwordCallback() (pass string, err error) {
 
 	tstate, err := terminal.GetState(0)
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
 		quit := false
-		for _ = range sig { quit = true; break }
+		for _ = range sig {
+			quit = true
+			break
+		}
 		terminal.Restore(0, tstate)
-		if quit { os.Exit(2) }
+		if quit {
+			os.Exit(2)
+		}
 	}()
 	defer func() {
 		signal.Stop(sig)
@@ -84,7 +93,9 @@ func passwordCallback() (pass string, err error) {
 }
 
 func addPasswordAuth(auths []ssh.AuthMethod) []ssh.AuthMethod {
-	if terminal.IsTerminal(0) == false { return auths }
+	if terminal.IsTerminal(0) == false {
+		return auths
+	}
 	return append(auths, ssh.PasswordCallback(passwordCallback))
 }
 

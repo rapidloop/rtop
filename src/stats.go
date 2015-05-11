@@ -34,34 +34,34 @@ import (
 )
 
 type FSInfo struct {
-	MountPoint		string
-	Used			uint64
-	Free			uint64
+	MountPoint string
+	Used       uint64
+	Free       uint64
 }
 
 type NetIntfInfo struct {
-	IPv4			string
-	IPv6			string
-	Rx				uint64
-	Tx				uint64
+	IPv4 string
+	IPv6 string
+	Rx   uint64
+	Tx   uint64
 }
 
 type Stats struct {
-	Uptime			time.Duration
-	Hostname		string
-	Load1			string
-	Load5			string
-	Load10			string
-	RunningProcs	string
-	TotalProcs		string
-	MemTotal		uint64
-	MemFree			uint64
-	MemBuffers		uint64
-	MemCached		uint64
-	SwapTotal		uint64
-	SwapFree		uint64
-	FSInfos			[]FSInfo
-	NetIntf			map[string]NetIntfInfo
+	Uptime       time.Duration
+	Hostname     string
+	Load1        string
+	Load5        string
+	Load10       string
+	RunningProcs string
+	TotalProcs   string
+	MemTotal     uint64
+	MemFree      uint64
+	MemBuffers   uint64
+	MemCached    uint64
+	SwapTotal    uint64
+	SwapFree     uint64
+	FSInfos      []FSInfo
+	NetIntf      map[string]NetIntfInfo
 }
 
 func getAllStats(client *ssh.Client, stats *Stats) {
@@ -76,13 +76,17 @@ func getAllStats(client *ssh.Client, stats *Stats) {
 
 func getUptime(client *ssh.Client, stats *Stats) (err error) {
 	uptime, err := runCommand(client, "/bin/cat /proc/uptime")
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 
 	parts := strings.Fields(uptime)
 	if len(parts) == 2 {
 		var upsecs float64
 		upsecs, err = strconv.ParseFloat(parts[0], 64)
-		if err != nil { return }
+		if err != nil {
+			return
+		}
 		stats.Uptime = time.Duration(upsecs * 1e9)
 	}
 
@@ -91,7 +95,9 @@ func getUptime(client *ssh.Client, stats *Stats) (err error) {
 
 func getHostname(client *ssh.Client, stats *Stats) (err error) {
 	hostname, err := runCommand(client, "/bin/hostname -f")
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 
 	stats.Hostname = strings.TrimSpace(hostname)
 	return
@@ -99,7 +105,9 @@ func getHostname(client *ssh.Client, stats *Stats) (err error) {
 
 func getLoad(client *ssh.Client, stats *Stats) (err error) {
 	line, err := runCommand(client, "/bin/cat /proc/loadavg")
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 
 	parts := strings.Fields(line)
 	if len(parts) == 5 {
@@ -119,7 +127,9 @@ func getLoad(client *ssh.Client, stats *Stats) (err error) {
 
 func getMemInfo(client *ssh.Client, stats *Stats) (err error) {
 	lines, err := runCommand(client, "/bin/cat /proc/meminfo")
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 
 	scanner := bufio.NewScanner(strings.NewReader(lines))
 	for scanner.Scan() {
@@ -127,7 +137,9 @@ func getMemInfo(client *ssh.Client, stats *Stats) (err error) {
 		parts := strings.Fields(line)
 		if len(parts) == 3 {
 			val, err := strconv.ParseUint(parts[1], 10, 64)
-			if err != nil { continue }
+			if err != nil {
+				continue
+			}
 			val *= 1024
 			switch parts[0] {
 			case "MemTotal:":
@@ -151,7 +163,9 @@ func getMemInfo(client *ssh.Client, stats *Stats) (err error) {
 
 func getFSInfo(client *ssh.Client, stats *Stats) (err error) {
 	lines, err := runCommand(client, "/bin/df -B1")
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 
 	scanner := bufio.NewScanner(strings.NewReader(lines))
 	for scanner.Scan() {
@@ -159,9 +173,13 @@ func getFSInfo(client *ssh.Client, stats *Stats) (err error) {
 		parts := strings.Fields(line)
 		if len(parts) == 6 && strings.Index(parts[0], "/dev/") == 0 {
 			used, err := strconv.ParseUint(parts[2], 10, 64)
-			if err != nil { continue }
+			if err != nil {
+				continue
+			}
 			free, err := strconv.ParseUint(parts[3], 10, 64)
-			if err != nil { continue }
+			if err != nil {
+				continue
+			}
 			stats.FSInfos = append(stats.FSInfos, FSInfo{
 				parts[5], used, free,
 			})
@@ -177,10 +195,14 @@ func getInterfaces(client *ssh.Client, stats *Stats) (err error) {
 	if err != nil {
 		// try /sbin/ip
 		lines, err = runCommand(client, "/sbin/ip -o addr")
-		if err != nil { return }
+		if err != nil {
+			return
+		}
 	}
 
-	if stats.NetIntf == nil { stats.NetIntf = make(map[string]NetIntfInfo) }
+	if stats.NetIntf == nil {
+		stats.NetIntf = make(map[string]NetIntfInfo)
+	}
 
 	scanner := bufio.NewScanner(strings.NewReader(lines))
 	for scanner.Scan() {
@@ -213,9 +235,13 @@ func getInterfaces(client *ssh.Client, stats *Stats) (err error) {
 
 func getInterfaceInfo(client *ssh.Client, stats *Stats) (err error) {
 	lines, err := runCommand(client, "/bin/cat /proc/net/dev")
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 
-	if stats.NetIntf == nil { return } // should have been here already
+	if stats.NetIntf == nil {
+		return
+	} // should have been here already
 
 	scanner := bufio.NewScanner(strings.NewReader(lines))
 	for scanner.Scan() {
@@ -226,9 +252,13 @@ func getInterfaceInfo(client *ssh.Client, stats *Stats) (err error) {
 			intf = strings.TrimSuffix(intf, ":")
 			if info, ok := stats.NetIntf[intf]; ok {
 				rx, err := strconv.ParseUint(parts[1], 10, 64)
-				if err != nil { continue }
+				if err != nil {
+					continue
+				}
 				tx, err := strconv.ParseUint(parts[9], 10, 64)
-				if err != nil { continue }
+				if err != nil {
+					continue
+				}
 				info.Rx = rx
 				info.Tx = tx
 				stats.NetIntf[intf] = info
@@ -238,4 +268,3 @@ func getInterfaceInfo(client *ssh.Client, stats *Stats) (err error) {
 
 	return
 }
-

@@ -1,4 +1,3 @@
-
 package main
 
 import (
@@ -21,7 +20,9 @@ func fmtUptime(stats *Stats) string {
 	}
 	for _, ch := range s1 {
 		s2 += string(ch)
-		if ch == 'h' || ch == 'm' { s2 += " " }
+		if ch == 'h' || ch == 'm' {
+			s2 += " "
+		}
 	}
 	return s2
 }

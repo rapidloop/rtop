@@ -28,11 +28,11 @@ package main
 import (
 	"fmt"
 	"golang.org/x/crypto/ssh"
-	"os"
-	"os/user"
-	"os/signal"
-	"path/filepath"
 	"log"
+	"os"
+	"os/signal"
+	"os/user"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -42,7 +42,6 @@ import (
 
 const VERSION = "1.0"
 const DEFAULT_REFRESH = 5 // default refresh interval in seconds
-
 
 //----------------------------------------------------------------------------
 // Command-line processing
@@ -79,11 +78,17 @@ func parseCmdLine() (key, username, addr string, interval time.Duration) {
 	var argKey, argHost, argInt string
 	for ok {
 		ok, arg, args = shift(args)
-		if !ok { break }
-		if arg == "-h" || arg == "--help" || arg == "--version" { usage(0) }
+		if !ok {
+			break
+		}
+		if arg == "-h" || arg == "--help" || arg == "--version" {
+			usage(0)
+		}
 		if arg == "-i" {
 			ok, argKey, args = shift(args)
-			if !ok { usage(1) }
+			if !ok {
+				usage(1)
+			}
 		} else if len(argHost) == 0 {
 			argHost = arg
 		} else if len(argInt) == 0 {
@@ -92,7 +97,9 @@ func parseCmdLine() (key, username, addr string, interval time.Duration) {
 			usage(1)
 		}
 	}
-	if len(argHost) == 0 || argHost[0] == '-' { usage(1) }
+	if len(argHost) == 0 || argHost[0] == '-' {
+		usage(1)
+	}
 
 	// key
 	usr, err := user.Current()
@@ -111,7 +118,9 @@ func parseCmdLine() (key, username, addr string, interval time.Duration) {
 	// username, addr
 	if i := strings.Index(argHost, "@"); i != -1 {
 		username = argHost[:i]
-		if i+1 >=len(argHost) { usage(1) }
+		if i+1 >= len(argHost) {
+			usage(1)
+		}
 		addr = argHost[i+1:]
 	} else {
 		username = usr.Username
@@ -154,8 +163,10 @@ func main() {
 	done := false
 	for !done {
 		select {
-		case <- sig: done = true
-		case <- timer: showStats(client)
+		case <-sig:
+			done = true
+		case <-timer:
+			showStats(client)
 		}
 	}
 }
@@ -230,8 +241,8 @@ Memory:
 }
 
 const (
-	escClear = "\033[H\033[2J"
-	escRed   = "\033[31m"
-	escReset = "\033[0m"
+	escClear       = "\033[H\033[2J"
+	escRed         = "\033[31m"
+	escReset       = "\033[0m"
 	escBrightWhite = "\033[37;1m"
 )
