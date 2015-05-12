@@ -29,6 +29,7 @@ import (
 	"fmt"
 	"github.com/mattn/go-colorable"
 	"golang.org/x/crypto/ssh"
+	"io"
 	"log"
 	"os"
 	"os/signal"
@@ -156,8 +157,9 @@ func main() {
 
 	client := sshConnect(username, addr, keyPath)
 
+	output := colorable.NewColorableStdout()
 	// the loop
-	showStats(client)
+	showStats(output, client)
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
 	timer := time.Tick(interval)
@@ -167,15 +169,15 @@ func main() {
 		case <-sig:
 			done = true
 		case <-timer:
-			showStats(client)
+			showStats(output, client)
 		}
 	}
 }
 
-func showStats(client *ssh.Client) {
-	output := colorable.NewColorableStdout()
+func showStats(output io.Writer, client *ssh.Client) {
 	stats := Stats{}
 	getAllStats(client, &stats)
+	clearConsole()
 	used := stats.MemTotal - stats.MemFree - stats.MemBuffers - stats.MemCached
 	fmt.Fprintf(output,
 		`%s%s%s%s up %s%s%s
