@@ -27,6 +27,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/mattn/go-colorable"
 	"golang.org/x/crypto/ssh"
 	"log"
 	"os"
@@ -48,7 +49,7 @@ const DEFAULT_REFRESH = 5 // default refresh interval in seconds
 
 func usage(code int) {
 	fmt.Printf(
-`rtop %s - (c) 2015 RapidLoop - MIT Licensed - http://rtop-monitor.org
+		`rtop %s - (c) 2015 RapidLoop - MIT Licensed - http://rtop-monitor.org
 rtop monitors server statistics over an ssh connection
 
 Usage: rtop [-i private-key-file] [user@]host[:port] [interval]
@@ -172,11 +173,12 @@ func main() {
 }
 
 func showStats(client *ssh.Client) {
+	output := colorable.NewColorableStdout()
 	stats := Stats{}
 	getAllStats(client, &stats)
 	used := stats.MemTotal - stats.MemFree - stats.MemBuffers - stats.MemCached
-	fmt.Printf(
-`%s%s%s%s up %s%s%s
+	fmt.Fprintf(output,
+		`%s%s%s%s up %s%s%s
 
 Load:
     %s%s %s %s%s
@@ -208,7 +210,7 @@ Memory:
 	if len(stats.FSInfos) > 0 {
 		fmt.Println("Filesystems:")
 		for _, fs := range stats.FSInfos {
-			fmt.Printf("    %s%8s%s: %s%s%s free of %s%s%s\n",
+			fmt.Fprintf(output, "    %s%8s%s: %s%s%s free of %s%s%s\n",
 				escBrightWhite, fs.MountPoint, escReset,
 				escBrightWhite, fmtBytes(fs.Free), escReset,
 				escBrightWhite, fmtBytes(fs.Used+fs.Free), escReset,
@@ -225,12 +227,12 @@ Memory:
 		sort.Strings(keys)
 		for _, intf := range keys {
 			info := stats.NetIntf[intf]
-			fmt.Printf("    %s%s%s - %s%s%s, %s%s%s\n",
+			fmt.Fprintf(output, "    %s%s%s - %s%s%s, %s%s%s\n",
 				escBrightWhite, intf, escReset,
 				escBrightWhite, info.IPv4, escReset,
 				escBrightWhite, info.IPv6, escReset,
 			)
-			fmt.Printf("      rx = %s%s%s, tx = %s%s%s\n",
+			fmt.Fprintf(output, "      rx = %s%s%s, tx = %s%s%s\n",
 				escBrightWhite, fmtBytes(info.Rx), escReset,
 				escBrightWhite, fmtBytes(info.Tx), escReset,
 			)
