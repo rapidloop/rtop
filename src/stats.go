@@ -46,6 +46,10 @@ type NetIntfInfo struct {
 	Tx   uint64
 }
 
+type LogData struct {
+	Lines	[]string
+}
+
 type Stats struct {
 	Uptime       time.Duration
 	Hostname     string
@@ -62,6 +66,7 @@ type Stats struct {
 	SwapFree     uint64
 	FSInfos      []FSInfo
 	NetIntf      map[string]NetIntfInfo
+	Log			 LogData
 }
 
 func getAllStats(client *ssh.Client, stats *Stats) {
@@ -72,6 +77,7 @@ func getAllStats(client *ssh.Client, stats *Stats) {
 	getFSInfo(client, stats)
 	getInterfaces(client, stats)
 	getInterfaceInfo(client, stats)
+	getJournalctlLog(client, stats)
 }
 
 func getUptime(client *ssh.Client, stats *Stats) (err error) {
@@ -264,6 +270,19 @@ func getInterfaceInfo(client *ssh.Client, stats *Stats) (err error) {
 				stats.NetIntf[intf] = info
 			}
 		}
+	}
+
+	return
+}
+
+func getJournalctlLog(client *ssh.Client, stats *Stats) (err error) {
+	stats.Log.Lines = nil;
+
+	lines, err := runCommand(client, "journalctl -e | tail")
+	scanner := bufio.NewScanner(strings.NewReader(lines))
+	for scanner.Scan() {
+		line := scanner.Text()
+		stats.Log.Lines = append(stats.Log.Lines, line)
 	}
 
 	return

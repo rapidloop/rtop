@@ -238,6 +238,23 @@ Memory:
 		}
 		fmt.Println()
 	}
+	if len(stats.Log.Lines) > 0 {
+		fmt.Println("System log:")
+		for intf := range stats.Log.Lines {
+			line := stats.Log.Lines[intf]
+			maxLen := len(line)
+			if maxLen > 80 {
+				maxLen = 80
+			}
+			fmt.Printf("	%s%s%s%s\n",
+				escBrightWhite,
+				line[0:21],
+				escReset,
+				line[21:maxLen],
+			)
+		}
+		fmt.Println()
+	}
 }
 
 const (
