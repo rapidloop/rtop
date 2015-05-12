@@ -113,9 +113,9 @@ func addPasswordAuth(auths []ssh.AuthMethod) []ssh.AuthMethod {
 
 func sshConnect(user, addr, keypath string) (client *ssh.Client) {
 	auths := make([]ssh.AuthMethod, 0, 2)
-	auths = addAgentAuth(auths)
-	auths = addKeyAuth(auths, keypath)
+    auths = addKeyAuth(auths, keypath)
 	auths = addPasswordAuth(auths)
+	auths = addAgentAuth(auths)
 
 	config := &ssh.ClientConfig{
 		User: user,
