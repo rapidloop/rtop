@@ -27,7 +27,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/mattn/go-colorable"
 	"golang.org/x/crypto/ssh"
 	"io"
 	"log"
@@ -157,7 +156,7 @@ func main() {
 
 	client := sshConnect(username, addr, keyPath)
 
-	output := colorable.NewColorableStdout()
+	output := getOutput()
 	// the loop
 	showStats(output, client)
 	sig := make(chan os.Signal, 1)
