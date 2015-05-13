@@ -28,6 +28,9 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"crypto/x509"
+	"encoding/pem"
+	"fmt"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 	"golang.org/x/crypto/ssh/terminal"
@@ -39,34 +42,7 @@ import (
 	"syscall"
 )
 
-func addKeyAuth(auths []ssh.AuthMethod, keypath string) []ssh.AuthMethod {
-	if len(keypath) == 0 {
-		return auths
-	}
-	pemBytes, err := ioutil.ReadFile(keypath)
-	if err != nil {
-		log.Print(err)
-		os.Exit(1)
-	}
-	signer, err := ssh.ParsePrivateKey(pemBytes)
-	if err != nil {
-		log.Print(err)
-		os.Exit(1)
-	}
-	return append(auths, ssh.PublicKeys(signer))
-}
-
-func addAgentAuth(auths []ssh.AuthMethod) []ssh.AuthMethod {
-	if sock := os.Getenv("SSH_AUTH_SOCK"); len(sock) > 0 {
-		if agconn, err := net.Dial("unix", sock); err == nil {
-			ag := agent.NewClient(agconn)
-			auths = append(auths, ssh.PublicKeysCallback(ag.Signers))
-		}
-	}
-	return auths
-}
-
-func passwordCallback() (pass string, err error) {
+func getpass(prompt string) (pass string, err error) {
 
 	tstate, err := terminal.GetState(0)
 	if err != nil {
@@ -83,6 +59,7 @@ func passwordCallback() (pass string, err error) {
 		}
 		terminal.Restore(0, tstate)
 		if quit {
+			fmt.Println()
 			os.Exit(2)
 		}
 	}()
@@ -92,7 +69,7 @@ func passwordCallback() (pass string, err error) {
 	}()
 
 	f := bufio.NewWriter(os.Stdout)
-	f.Write([]byte("Password: "))
+	f.Write([]byte(prompt))
 	f.Flush()
 
 	passbytes, err := terminal.ReadPassword(0)
@@ -104,6 +81,86 @@ func passwordCallback() (pass string, err error) {
 	return
 }
 
+// ref golang.org/x/crypto/ssh/keys.go#ParseRawPrivateKey.
+func ParsePemBlock(block *pem.Block) (interface{}, error) {
+
+	switch block.Type {
+	case "RSA PRIVATE KEY":
+		return x509.ParsePKCS1PrivateKey(block.Bytes)
+	case "EC PRIVATE KEY":
+		return x509.ParseECPrivateKey(block.Bytes)
+	case "DSA PRIVATE KEY":
+		return ssh.ParseDSAPrivateKey(block.Bytes)
+	default:
+		return nil, fmt.Errorf("rtop: unsupported key type %q", block.Type)
+	}
+}
+
+func addKeyAuth(auths []ssh.AuthMethod, keypath string) []ssh.AuthMethod {
+	if len(keypath) == 0 {
+		return auths
+	}
+
+	// read the file
+	pemBytes, err := ioutil.ReadFile(keypath)
+	if err != nil {
+		log.Print(err)
+		os.Exit(1)
+	}
+
+	// get first pem block
+	block, _ := pem.Decode(pemBytes)
+	if block == nil {
+		log.Printf("no key found in %s", keypath)
+		return auths
+	}
+
+	// handle plain and encrypted keyfiles
+	if x509.IsEncryptedPEMBlock(block) {
+		pass, err := getpass("Key passphrase: ")
+		if err != nil {
+			return auths
+		}
+		block.Bytes, err = x509.DecryptPEMBlock(block, []byte(pass))
+		if err != nil {
+			log.Print(err)
+			return auths
+		}
+		key, err := ParsePemBlock(block)
+		if err != nil {
+			log.Print(err)
+			return auths
+		}
+		signer, err := ssh.NewSignerFromKey(key)
+		if err != nil {
+			log.Print(err)
+			return auths
+		}
+		return append(auths, ssh.PublicKeys(signer))
+	} else {
+		signer, err := ssh.ParsePrivateKey(pemBytes)
+		if err != nil {
+			log.Print(err)
+			return auths
+		}
+		return append(auths, ssh.PublicKeys(signer))
+	}
+}
+
+func addAgentAuth(auths []ssh.AuthMethod) []ssh.AuthMethod {
+	if sock := os.Getenv("SSH_AUTH_SOCK"); len(sock) > 0 {
+		if agconn, err := net.Dial("unix", sock); err == nil {
+			ag := agent.NewClient(agconn)
+			auths = append(auths, ssh.PublicKeysCallback(ag.Signers))
+		}
+	}
+	return auths
+}
+
+func passwordCallback() (pass string, err error) {
+	return getpass("Password: ")
+}
+
 func addPasswordAuth(auths []ssh.AuthMethod) []ssh.AuthMethod {
 	if terminal.IsTerminal(0) == false {
 		return auths
@@ -112,9 +169,9 @@ func addPasswordAuth(auths []ssh.AuthMethod) []ssh.AuthMethod {
 }
 
 func sshConnect(user, addr, keypath string) (client *ssh.Client) {
-	auths := make([]ssh.AuthMethod, 0, 2)
-	auths = addAgentAuth(auths)
+	auths := make([]ssh.AuthMethod, 0, 3)
 	auths = addKeyAuth(auths, keypath)
+	auths = addAgentAuth(auths)
 	auths = addPasswordAuth(auths)
 
 	config := &ssh.ClientConfig{
