@@ -39,6 +39,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 )
 
@@ -117,7 +118,8 @@ func addKeyAuth(auths []ssh.AuthMethod, keypath string) []ssh.AuthMethod {
 
 	// handle plain and encrypted keyfiles
 	if x509.IsEncryptedPEMBlock(block) {
-		pass, err := getpass("Key passphrase: ")
+		prompt := fmt.Sprintf("Enter passphrase for key '%s': ", keypath)
+		pass, err := getpass(prompt)
 		if err != nil {
 			return auths
 		}
@@ -147,32 +149,55 @@ func addKeyAuth(auths []ssh.AuthMethod, keypath string) []ssh.AuthMethod {
 	}
 }
 
-func addAgentAuth(auths []ssh.AuthMethod) []ssh.AuthMethod {
+func getAgentAuth() (auth ssh.AuthMethod, ok bool) {
 	if sock := os.Getenv("SSH_AUTH_SOCK"); len(sock) > 0 {
 		if agconn, err := net.Dial("unix", sock); err == nil {
 			ag := agent.NewClient(agconn)
-			auths = append(auths, ssh.PublicKeysCallback(ag.Signers))
+			auth = ssh.PublicKeysCallback(ag.Signers)
+			ok = true
 		}
 	}
-	return auths
+	return
 }
 
-func passwordCallback() (pass string, err error) {
-	return getpass("Password: ")
-}
-
-func addPasswordAuth(auths []ssh.AuthMethod) []ssh.AuthMethod {
+func addPasswordAuth(user, addr string, auths []ssh.AuthMethod) []ssh.AuthMethod {
 	if terminal.IsTerminal(0) == false {
 		return auths
+	}
+	host := addr
+	if i := strings.LastIndex(host, ":"); i != -1 {
+		host = host[:i]
+	}
+	prompt := fmt.Sprintf("%s@%s's password: ", user, host)
+	passwordCallback := func() (string, error) {
+		return getpass(prompt)
 	}
 	return append(auths, ssh.PasswordCallback(passwordCallback))
 }
 
+func tryAgentConnect(user, addr string) (client *ssh.Client) {
+	if auth, ok := getAgentAuth(); ok {
+		config := &ssh.ClientConfig{
+			User: user,
+			Auth: []ssh.AuthMethod{ auth },
+		}
+		client, _ = ssh.Dial("tcp", addr, config)
+	}
+
+	return
+}
+
 func sshConnect(user, addr, keypath string) (client *ssh.Client) {
-	auths := make([]ssh.AuthMethod, 0, 3)
+	// try connecting via agent first
+	client = tryAgentConnect(user, addr)
+	if client != nil {
+		return
+	}
+
+	// if that failed try with the key and password methods
+	auths := make([]ssh.AuthMethod, 0, 2)
 	auths = addKeyAuth(auths, keypath)
-	auths = addAgentAuth(auths)
-	auths = addPasswordAuth(auths)
+	auths = addPasswordAuth(user, addr, auths)
 
 	config := &ssh.ClientConfig{
 		User: user,

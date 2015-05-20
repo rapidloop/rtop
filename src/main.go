@@ -165,6 +165,7 @@ func main() {
 		select {
 		case <-sig:
 			done = true
+			fmt.Println()
 		case <-timer:
 			showStats(client)
 		}
