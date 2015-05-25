@@ -239,6 +239,21 @@ Memory:
 		}
 		fmt.Println()
 	}
+
+	fmt.Println("CPU:")
+	fmt.Printf("    %s%.2f%s%% user, %s%.2f%s%% sys, %s%.2f%s%% nice, "+
+		"%s%.2f%s%% idle, %s%.2f%s%% iowait, %s%.2f%s%% hardirq, "+
+		"%s%.2f%s%% softirq, %s%.2f%s%% guest",
+		escBrightWhite, stats.CPU.User, escReset,
+		escBrightWhite, stats.CPU.System, escReset,
+		escBrightWhite, stats.CPU.Nice, escReset,
+		escBrightWhite, stats.CPU.Idle, escReset,
+		escBrightWhite, stats.CPU.Iowait, escReset,
+		escBrightWhite, stats.CPU.Irq, escReset,
+		escBrightWhite, stats.CPU.SoftIrq, escReset,
+		escBrightWhite, stats.CPU.Guest, escReset,
+	)
+	fmt.Println()
 }
 
 const (
