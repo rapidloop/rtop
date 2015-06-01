@@ -1,9 +1,0 @@
-[submodule "src/golang.org/x/crypto"]
-	path = src/golang.org/x/crypto
-	url = https://github.com/golang/crypto.git
-[submodule "src/github.com/mattn/go-colorable"]
-	path = src/github.com/mattn/go-colorable
-	url = https://github.com/mattn/go-colorable
-[submodule "src/github.com/mattn/go-isatty"]
-	path = src/github.com/mattn/go-isatty
-	url = https://github.com/mattn/go-isatty

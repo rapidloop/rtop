@@ -185,6 +185,9 @@ func showStats(output io.Writer, client *ssh.Client) {
 Load:
     %s%s %s %s%s
 
+CPU:
+    %s%.2f%s%% user, %s%.2f%s%% sys, %s%.2f%s%% nice, %s%.2f%s%% idle, %s%.2f%s%% iowait, %s%.2f%s%% hardirq, %s%.2f%s%% softirq, %s%.2f%s%% guest
+
 Processes:
     %s%s%s running of %s%s%s total
 
@@ -200,6 +203,14 @@ Memory:
 		escBrightWhite, stats.Hostname, escReset,
 		escBrightWhite, fmtUptime(&stats), escReset,
 		escBrightWhite, stats.Load1, stats.Load5, stats.Load10, escReset,
+		escBrightWhite, stats.CPU.User, escReset,
+		escBrightWhite, stats.CPU.System, escReset,
+		escBrightWhite, stats.CPU.Nice, escReset,
+		escBrightWhite, stats.CPU.Idle, escReset,
+		escBrightWhite, stats.CPU.Iowait, escReset,
+		escBrightWhite, stats.CPU.Irq, escReset,
+		escBrightWhite, stats.CPU.SoftIrq, escReset,
+		escBrightWhite, stats.CPU.Guest, escReset,
 		escBrightWhite, stats.RunningProcs, escReset,
 		escBrightWhite, stats.TotalProcs, escReset,
 		escBrightWhite, fmtBytes(stats.MemFree), escReset,

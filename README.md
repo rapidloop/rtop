@@ -6,7 +6,7 @@ and displays vital system metrics (CPU, disk, memory, network). No special
 software is needed on the remote system, other than an SSH server and
 working credentials.
 
-Only Linux systems can be monitored, but most modern distros will work.
+Only Linux systems can be monitored, and most modern distros will work.
 
 `rtop` is MIT-licensed and can be used anywhere with attribution.
 
@@ -15,16 +15,13 @@ and screenshots!*
 
 ## build
 
-`rtop` is written in [go](http://golang.org/), and needs just one dependent
-library [x/crypto](https://golang.org/pkg/crypto/). `rtop` does not use any
-dependency managers, just a git submodule. Follow these steps to build:
+`rtop` is written in [go](http://golang.org/), and requires Go version 1.2
+or higher. To build, `go get` it:
 
-    git clone --recursive http://github.com/rapidloop/rtop
-    cd rtop
-    make
+    go get github.com/rapidloop/rtop
 
-The `--recursive` option will pull in the git submodule also. If you forget
-to use the flag, try `make init`.
+You should find the binary `rtop` under `$GOPATH/bin` when the command
+completes. There are no runtime dependencies or configuration needed.
 
 ## contribute
 
