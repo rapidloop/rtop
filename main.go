@@ -48,7 +48,7 @@ const DEFAULT_REFRESH = 5 // default refresh interval in seconds
 
 func usage(code int) {
 	fmt.Printf(
-`rtop %s - (c) 2015 RapidLoop - MIT Licensed - http://rtop-monitor.org
+		`rtop %s - (c) 2015 RapidLoop - MIT Licensed - http://rtop-monitor.org
 rtop monitors server statistics over an ssh connection
 
 Usage: rtop [-i private-key-file] [user@]host[:port] [interval]
@@ -144,6 +144,21 @@ func parseCmdLine() (key, username, addr string, interval time.Duration) {
 	return
 }
 
+//rtop only support for Linux system
+func validateOS(client *ssh.Client) {
+	ostype, err := runCommand(client, "uname")
+	if err != nil {
+		os.Exit(1)
+	}
+	//remove newline character
+	ostype = strings.Trim(ostype, "\n")
+
+	if !strings.EqualFold(ostype, "Linux") {
+		fmt.Println("\nrtop not support for ", ostype, "system\n")
+		os.Exit(1)
+	}
+}
+
 //----------------------------------------------------------------------------
 
 func main() {
@@ -154,6 +169,7 @@ func main() {
 	keyPath, username, addr, interval := parseCmdLine()
 
 	client := sshConnect(username, addr, keyPath)
+	validateOS(client)
 
 	// the loop
 	showStats(client)
@@ -177,7 +193,7 @@ func showStats(client *ssh.Client) {
 	getAllStats(client, &stats)
 	used := stats.MemTotal - stats.MemFree - stats.MemBuffers - stats.MemCached
 	fmt.Printf(
-`%s%s%s%s up %s%s%s
+		`%s%s%s%s up %s%s%s
 
 Load:
     %s%s %s %s%s
