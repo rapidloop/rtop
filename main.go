@@ -27,7 +27,6 @@ package main
 
 import (
 	"fmt"
-	"golang.org/x/crypto/ssh"
 	"io"
 	"log"
 	"os"
@@ -39,6 +38,9 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/dullgiulio/sshconfig"
+	"golang.org/x/crypto/ssh"
 )
 
 const VERSION = "1.0"
@@ -108,6 +110,38 @@ func parseCmdLine() (key, username, addr string, interval time.Duration) {
 		log.Print(err)
 		usage(1)
 	}
+
+	f, err := os.Open(filepath.Join(usr.HomeDir, ".ssh", "config"))
+	// Got the config, scan for matching hosts
+	if err == nil {
+		sections, err := sshconfig.Parse(f)
+		if err != nil {
+			log.Printf("error parsing ssh config: %v", err)
+		} else {
+			for s := range sections {
+				// Support multiple definitions per config entry
+				hostnames := strings.Split(sections[s].Name, " ")
+				for _, h := range hostnames {
+					// Choose ssh config entry values if they exist
+					if h == argHost {
+						configHostname, ok := sections[s].Values["Hostname"]
+						if ok {
+							argHost = configHostname
+						}
+						configUser, ok := sections[s].Values["User"]
+						if ok {
+							username = configUser
+						}
+						configPort, ok := sections[s].Values["Port"]
+						if ok {
+							argHost = fmt.Sprintf("%v:%v", argHost, configPort)
+						}
+					}
+				}
+			}
+		}
+	}
+
 	if len(argKey) == 0 {
 		key = filepath.Join(usr.HomeDir, ".ssh", "id_rsa")
 		if _, err := os.Stat(key); os.IsNotExist(err) {
