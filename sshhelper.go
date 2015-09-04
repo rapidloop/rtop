@@ -31,9 +31,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/agent"
-	"golang.org/x/crypto/ssh/terminal"
 	"io/ioutil"
 	"log"
 	"net"
@@ -41,6 +38,10 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+
+	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/agent"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 func getpass(prompt string) (pass string, err error) {
@@ -179,7 +180,7 @@ func tryAgentConnect(user, addr string) (client *ssh.Client) {
 	if auth, ok := getAgentAuth(); ok {
 		config := &ssh.ClientConfig{
 			User: user,
-			Auth: []ssh.AuthMethod{ auth },
+			Auth: []ssh.AuthMethod{auth},
 		}
 		client, _ = ssh.Dial("tcp", addr, config)
 	}

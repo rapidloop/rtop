@@ -27,7 +27,6 @@ package main
 
 import (
 	"fmt"
-	"golang.org/x/crypto/ssh"
 	"io"
 	"log"
 	"os"
@@ -39,6 +38,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"golang.org/x/crypto/ssh"
 )
 
 const VERSION = "1.0"
