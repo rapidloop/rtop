@@ -36,7 +36,6 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"os/user"
 	"strings"
 	"syscall"
 
@@ -101,21 +100,11 @@ func ParsePemBlock(block *pem.Block) (interface{}, error) {
 
 func expandPath(path string) string {
 
-	if len(path) < 2 {
+	if len(path) < 2 || path[:2] != "~/" {
 		return path
 	}
 
-	if path[:2] != "~/" {
-		return path
-	}
-
-	usr, err := user.Current()
-
-	if err != nil {
-		return path
-	}
-
-	return strings.Replace(path, "~", usr.HomeDir, 1)
+	return strings.Replace(path, "~", currentUser.HomeDir, 1)
 }
 
 func addKeyAuth(auths []ssh.AuthMethod, keypath string) []ssh.AuthMethod {
