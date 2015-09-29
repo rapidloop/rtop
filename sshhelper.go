@@ -98,10 +98,21 @@ func ParsePemBlock(block *pem.Block) (interface{}, error) {
 	}
 }
 
+func expandPath(path string) string {
+
+	if len(path) < 2 || path[:2] != "~/" {
+		return path
+	}
+
+	return strings.Replace(path, "~", currentUser.HomeDir, 1)
+}
+
 func addKeyAuth(auths []ssh.AuthMethod, keypath string) []ssh.AuthMethod {
 	if len(keypath) == 0 {
 		return auths
 	}
+
+	keypath = expandPath(keypath)
 
 	// read the file
 	pemBytes, err := ioutil.ReadFile(keypath)
