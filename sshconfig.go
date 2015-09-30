@@ -107,7 +107,7 @@ func parseSshConfig(path string) bool {
 			continue
 		}
 		parts := strings.Fields(line)
-		if len(parts) > 1 && parts[0] == "Host" {
+		if len(parts) > 1 && strings.ToLower(parts[0]) == "host" {
 			hosts := parts[1:]
 			for _, h := range hosts {
 				if _, ok := HostInfo[h]; !ok {
@@ -123,22 +123,22 @@ func parseSshConfig(path string) bool {
 			}
 		}
 		if len(parts) == 2 {
-			switch parts[0] {
-			case "Hostname":
+			switch strings.ToLower(parts[0]) {
+			case "hostname":
 				update(func(s *Section) {
 					s.Hostname = parts[1]
 				})
-			case "Port":
+			case "port":
 				if p, err := strconv.Atoi(parts[1]); err == nil {
 					update(func(s *Section) {
 						s.Port = p
 					})
 				}
-			case "User":
+			case "user":
 				update(func(s *Section) {
 					s.User = parts[1]
 				})
-			case "IdentityFile":
+			case "identityfile":
 				update(func(s *Section) {
 					s.IdentityFile = parts[1]
 				})
