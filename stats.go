@@ -191,7 +191,7 @@ func getMemInfo(client *ssh.Client, stats *Stats) (err error) {
 }
 
 func getFSInfo(client *ssh.Client, stats *Stats) (err error) {
-	lines, err := runCommand(client, "/bin/df -B1")
+	lines, err := runCommand(client, "/bin/df -PB1")
 	if err != nil {
 		return
 	}
