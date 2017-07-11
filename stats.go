@@ -27,13 +27,15 @@ package main
 
 import (
 	"bufio"
-	"golang.org/x/crypto/ssh"
 	"strconv"
 	"strings"
 	"time"
+
+	"golang.org/x/crypto/ssh"
 )
 
 type FSInfo struct {
+	Device     string
 	MountPoint string
 	Used       uint64
 	Free       uint64
@@ -189,7 +191,7 @@ func getMemInfo(client *ssh.Client, stats *Stats) (err error) {
 }
 
 func getFSInfo(client *ssh.Client, stats *Stats) (err error) {
-	lines, err := runCommand(client, "/bin/df -B1")
+	lines, err := runCommand(client, "/bin/df -PB1")
 	if err != nil {
 		return
 	}
@@ -215,7 +217,7 @@ func getFSInfo(client *ssh.Client, stats *Stats) (err error) {
 				continue
 			}
 			stats.FSInfos = append(stats.FSInfos, FSInfo{
-				parts[5-i], used, free,
+				parts[0], parts[5-i], used, free,
 			})
 		}
 	}

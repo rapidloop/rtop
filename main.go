@@ -286,7 +286,8 @@ Memory:
 	if len(stats.FSInfos) > 0 {
 		fmt.Println("Filesystems:")
 		for _, fs := range stats.FSInfos {
-			fmt.Fprintf(output, "    %s%8s%s: %s%s%s free of %s%s%s\n",
+			fmt.Fprintf(output, "%s%28s%s    %s%8s%s: %s%s%s free of %s%s%s\n",
+				escBrightWhite, fs.Device, escReset,
 				escBrightWhite, fs.MountPoint, escReset,
 				escBrightWhite, fmtBytes(fs.Free), escReset,
 				escBrightWhite, fmtBytes(fs.Used+fs.Free), escReset,
