@@ -83,7 +83,7 @@ func getpass(prompt string) (pass string, err error) {
 	return
 }
 
-// ref golang.org/x/crypto/ssh/keys.go#ParseRawPrivateKey.
+// ParsePemBlock: ref golang.org/x/crypto/ssh/keys.go#ParseRawPrivateKey.
 func ParsePemBlock(block *pem.Block) (interface{}, error) {
 
 	switch block.Type {
