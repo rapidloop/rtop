@@ -3,6 +3,7 @@
 rtop - the remote system monitoring utility
 
 Copyright (c) 2015-17 RapidLoop
+Copyright (c) 2020 no1xsyzy
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -192,6 +193,9 @@ func tryAgentConnect(user, addr string) (client *ssh.Client) {
 		config := &ssh.ClientConfig{
 			User: user,
 			Auth: []ssh.AuthMethod{auth},
+			HostKeyCallback: func(string, net.Addr, ssh.PublicKey) error {
+				return nil
+			},
 		}
 		client, _ = ssh.Dial("tcp", addr, config)
 	}
