@@ -1,5 +1,6 @@
 
 # rtop
+[![Comment-on-Github.Party](https://img.shields.io/badge/Comment%20on-Github.Party-yellow.svg)](https://github.party/item?id=56)
 
 [![Join the chat at https://gitter.im/rapidloop/rtop](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/rapidloop/rtop?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
